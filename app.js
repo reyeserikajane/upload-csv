@@ -44,12 +44,13 @@
       return;
     }
 
+    text = text.replace(/^\uFEFF/, ""); // Remove BOM (Byte Order Mark)
     var rows = text.split(NEWLINE);
     var headers = rows
       .shift()
       .trim()
       .split(DELIMITER)
-      .map((h) => h.trim().toLowerCase()); // Convert to lowercase for case-insensitive comparison
+      .map((h) => h.trim().toLowerCase()); // Convert to lowercase and trim for comparison
 
     if (!validateHeaders(headers)) {
       alert(
@@ -64,8 +65,12 @@
       r = r.trim();
       if (!r) return;
 
-      var cols = r.split(DELIMITER).map((c) => c.trim());
-      if (cols.length !== REQUIRED_HEADERS.length) return;
+      // Correctly handle quoted CSV values (like names)
+      var cols = r.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+      if (!cols || cols.length !== REQUIRED_HEADERS.length) return;
+
+      // Remove surrounding quotes and trim each column
+      cols = cols.map((c) => c.replace(/^"|"$/g, "").trim());
 
       var studentNumber = cols[0];
       newEntries.set(studentNumber, cols);
@@ -119,8 +124,14 @@
   }
 
   function validateHeaders(headers) {
-    // Check if headers match the required ones in a case-insensitive way
-    var lowerCaseRequiredHeaders = REQUIRED_HEADERS.map((h) => h.toLowerCase());
-    return JSON.stringify(headers) === JSON.stringify(lowerCaseRequiredHeaders);
+    // Trim and compare headers in a case-insensitive way
+    var lowerCaseRequiredHeaders = REQUIRED_HEADERS.map((h) =>
+      h.trim().toLowerCase(),
+    );
+    var trimmedHeaders = headers.map((h) => h.trim().toLowerCase());
+    return (
+      JSON.stringify(trimmedHeaders) ===
+      JSON.stringify(lowerCaseRequiredHeaders)
+    );
   }
 })();
