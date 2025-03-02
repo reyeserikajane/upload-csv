@@ -47,7 +47,7 @@
       .shift()
       .trim()
       .split(DELIMITER)
-      .map((h) => h.trim());
+      .map((h) => h.trim().toLowerCase()); // Convert to lowercase for case-insensitive comparison
 
     if (!validateHeaders(headers)) {
       alert(
@@ -103,6 +103,8 @@
   }
 
   function validateHeaders(headers) {
-    return JSON.stringify(headers) === JSON.stringify(REQUIRED_HEADERS);
+    // Check if headers match the required ones in a case-insensitive way
+    var lowerCaseRequiredHeaders = REQUIRED_HEADERS.map((h) => h.toLowerCase());
+    return JSON.stringify(headers) === JSON.stringify(lowerCaseRequiredHeaders);
   }
 })();
