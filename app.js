@@ -4,6 +4,7 @@
   var REQUIRED_HEADERS = ["Student Number", "Student Name", "Student Email"];
   var i = document.getElementById("file");
   var table = document.getElementById("table");
+  var studentNumbers = new Map(); // Store student numbers and their rows
 
   if (!i || !table) {
     return;
@@ -15,6 +16,7 @@
   i.addEventListener("change", function () {
     if (!!i.files && i.files.length > 0) {
       parseCSV(i.files[0]);
+      i.value = ""; // Allow re-uploading the same file
     }
   });
 
@@ -56,10 +58,7 @@
       return;
     }
 
-    // Clear table data but keep headers
-    while (table.rows.length > 1) {
-      table.deleteRow(1);
-    }
+    var newEntries = new Map();
 
     rows.forEach(function (r) {
       r = r.trim();
@@ -68,21 +67,38 @@
       var cols = r.split(DELIMITER).map((c) => c.trim());
       if (cols.length !== REQUIRED_HEADERS.length) return;
 
-      var rtr = document.createElement("tr");
-      cols.forEach(function (c) {
-        var td = document.createElement("td");
-        td.textContent = c;
-        rtr.appendChild(td);
-      });
+      var studentNumber = cols[0];
+      newEntries.set(studentNumber, cols);
+    });
 
-      // Add an extra column for "Assign Student"
-      var assignTd = document.createElement("td");
-      var assignButton = document.createElement("button");
-      assignButton.textContent = "Assign Student";
-      assignTd.appendChild(assignButton);
-      rtr.appendChild(assignTd);
+    newEntries.forEach((cols, studentNumber) => {
+      if (studentNumbers.has(studentNumber)) {
+        var replace = confirm(
+          `Student Number ${studentNumber} already exists. Do you want to replace the existing data?`,
+        );
+        if (replace) {
+          var existingRow = studentNumbers.get(studentNumber);
+          existingRow.cells[1].textContent = cols[1];
+          existingRow.cells[2].textContent = cols[2];
+        }
+      } else {
+        var rtr = document.createElement("tr");
+        cols.forEach(function (c) {
+          var td = document.createElement("td");
+          td.textContent = c;
+          rtr.appendChild(td);
+        });
 
-      table.appendChild(rtr);
+        // Add an extra column for "Assign Student"
+        var assignTd = document.createElement("td");
+        var assignButton = document.createElement("button");
+        assignButton.textContent = "Assign Student";
+        assignTd.appendChild(assignButton);
+        rtr.appendChild(assignTd);
+
+        table.appendChild(rtr);
+        studentNumbers.set(studentNumber, rtr);
+      }
     });
   }
 
